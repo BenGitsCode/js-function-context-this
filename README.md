@@ -9,7 +9,9 @@
 By the end of this lesson, students should be able to:
 
 -   Recall whether or not `this` is determined at declaration.
+  - ```no... it's determined when we invoke the function```
 -   Explain what `this` points to in each calling context.
+  - ```Calling contexts: .call, .apply, normal function invocation, method invocation, constructor function```
 -   Read and follow the execution context of code that uses different `this`
 idioms.
 
@@ -63,9 +65,9 @@ let a = 1;
 
 if (true) {
   a = 2;
-  console.log(a) // What logs?
+  console.log(a) // What logs? Logs 2
 }
-console.log(a) // What logs?
+console.log(a) // What logs? Logs 2 because it's the same a that's reassigned
 ```
 
 Example 2:
@@ -74,9 +76,9 @@ let a = 1;
 
 if (true) {
   let a = 2;
-  console.log(a) // What logs?
+  console.log(a) // What logs? Logs 2
 }
-console.log(a) // What logs?
+console.log(a) // What logs? Logs 1 because the a is declared inside the conditional scope... but it's not reassigned in the global scope
 ```
 
 Example 3:
@@ -88,9 +90,11 @@ const reAssign(){
 
 let a = 1;
 let b = 2;
-
-reAssign(); // What logs?
-console.log(a); // What logs?
+//line 91
+reAssign(); // What logs? Logs 2, because in reAssign a gets reassigned to b
+console.log(a); // What logs? Logs 2 because of closure...
+// it's already been reassigned... on line 91 a === 1,
+// but after calling reAssign, the values get changed
 ```
 
 Example 4:
@@ -103,8 +107,8 @@ const reAssign(a, b){
 let a = 1;
 let b = 2;
 
-reAssign(); // What logs?
-console.log(a); // What logs?
+reAssign(); // What logs? Logs undefined because you didn't put in the arguments
+console.log(a); // What logs? Logs 1 because reAssign never happened
 ```
 
 Example 5:
@@ -117,8 +121,11 @@ const reAssign(a, b){
 let a = 1;
 let b = 2;
 
-reAssign(a, b); // What logs?
-console.log(a); // What logs?
+reAssign(a, b); // What logs? Logs 2 because now the arguments have been
+//declared, so the reAssign can actually run
+console.log(a); // What logs? Logs 1 because it's calling it outside of the
+// scope of reAssign... reAssign only reassigning the local parameter,
+// not the actual variable
 ```
 
 Scope can be helpful in understanding call context.
@@ -129,9 +136,9 @@ const reAssign(a, b){
   console.log( a );
 }
 
-reAssign(2, 3); // what logs
-reAssign(10, 11); // what logs
-reAssign(10, 11); // what logs
+reAssign(2, 3); // what logs?
+reAssign(10, 11); // what logs?
+reAssign(10, 11); // what logs?
 ```
 
 The value of our parameters `a` and `b` depend on when the function is called,
@@ -148,7 +155,7 @@ let xwing = {
     pilot: null,
 
     setPilot: function(pilot) {
-        this.pilot = pilot;
+        this.pilot = pilot; // this references xwing
         this.update();
     },
 
@@ -162,6 +169,8 @@ xwing.setPilot("Luke Skywalker");
 
 console.log(xwing.pilot);
 // >> "Luke Skywalker"
+// because we did xwing.setPilot("Luke Skywalker") before we logged xwing.pilot
+// if the lines were switched it'd prob log null
 ```
 
 ## The Four Patterns of Invocation
@@ -181,17 +190,22 @@ const goBoom = function() {
 }
 
 goBoom(); // what logs in the browser vs in node?
+// in browser: Logs 'this is window' or something along those lines
+// in node: Logs 'this is <that huge function>' more or less
 ```
 
 Following best practices, we can add `use strict` to get consistent results
 
 ```js
-'use strict'
+'use strict' //ooh, something new
 const goBoom = function() {
     console.log('this is ', this);
 }
 
 goBoom(); // what logs in the browser vs in node?
+// Browser: Logs 'this is undefined'
+// Node: Logs 'this is undefined' too
+// that's why we always 'use strict'
 ```
 
 **Context**: `this` refers to the `window` object (global scope).  Here we
@@ -234,7 +248,7 @@ while ```apply()``` accepts a single array of arguments.
 ```js
 const goBoom = function () {
   console.log("this refers to ", this);
-};
+}; //with use strict, `this` is undefined
 
 let deathstar = {
   weapon: 'Planet destroying laser'
@@ -242,6 +256,7 @@ let deathstar = {
 
 goBoom.call(deathstar);
 // this === deathstar
+// here we're calling deathstar... so .call passes in what we want `this` to be
 ```
 
 **Context**: `this` refers to the passed object.  Here you would say
@@ -260,7 +275,7 @@ the convention of capitalized names:
 ```js
 const Deathstar = function (weapon) {
   console.log("this is ", this);
-  this.emporer = "Darth Sidius";
+  this.emporer = "Darth Sidius"; // this is referencing the instance
   this.weapon = weapon;
   this.whatIsThis = function(){
     console.log("Inside whatIsThis, this is ", this);
@@ -269,6 +284,13 @@ const Deathstar = function (weapon) {
 };
 
 let thatsNoMoon = new Deathstar('Mega giant huge laser');
+// Logs "this is <instance of Deathstar object>"
+// then it logs "this is Deathstar {emporer: "Darth Sidius",
+// weapon: "Mega giant huge laser" }"
+
+// When we run thatsNoMoon.whatIsThis();
+// logs "Inside whatIsThis, this is Deathstar {emporer: "Darth Sidius",
+// weapon: "Mega giant huge laser"}"
 let endor = new Deathstar('Happy little Ewoks');
 // this === shiny new Deathstar instance
 ```
@@ -290,7 +312,7 @@ How this breaks down:
 If a ```this``` parameter is provided to ```forEach()``` and other Array Methods,
 it will be passed to callback when invoked, for use as its this value.
 Otherwise, the value ```undefined``` will be passed for use as its its value.
-(forEach)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach#Using_thisArg]
+[forEach](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach#Using_thisArg)
 
 ```javascript
 let counter = {
@@ -306,7 +328,7 @@ let counter = {
 }
 
 counter.add([1,2,3]);
-console.log(counter.sum); // what logs?
+console.log(counter.sum); // what logs? right now, it logs 0! uh oh
 ```
 
 As stated in the documentation, `this` is `undefined` in an array method unless
@@ -317,7 +339,8 @@ let counter = {
   sum: 0,
   count: 0,
   add: function (array){
-    array.forEach(this.sumAndCount, this); // Note 2nd argument
+    array.forEach(this.sumAndCount, this); // Note 2nd argument... we want this
+    // to be what this is right now... I believe it's counter in this case
   },
   sumAndCount: function (entry){
     this.sum += entry;
@@ -347,13 +370,39 @@ let counter = {
 }
 
 counter.add([1,2,3]);
-console.log(counter.sum); // what logs?
-console.log(anyObject.sum); // what logs?
+console.log(counter.sum); // what logs? Logs 0 because it's referencing
+// anyObject in global scope, I think
+console.log(anyObject.sum); // what logs? Logs NaN because
+// undefined + <any number> is not a number
 ```
 
 Since ```counter.add()``` calls ```add()``` with `this` referring to `counter`,
 passing ```anyObject``` into ```forEach()``` makes `this` in the ```forEach()```
 callback refer to ```anyObject```.
+
+#### Live example:
+```javascript
+let anyObject = {
+  sum: 0,
+  count: 0
+};
+
+let counter = {
+  sum: 0,
+  count: 0,
+  add: function (array){
+    array.forEach(this.sumAndCount, anyObject);  // Note 2nd argument
+  },
+  sumAndCount: function (entry){
+    this.sum += entry;
+    ++this.count;
+  }
+}
+
+counter.add([1,2,3]);
+console.log(counter.sum); // what logs?
+console.log(anyObject.sum); // what logs?
+```
 
 [forEach - JavaScript | MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach)
 
@@ -389,7 +438,7 @@ let counter = {
   sum: 0,
   count: 0,
   add: function (array){
-    array.forEach((e) => { this.sumAndCount(e) });
+    array.forEach((e) => { this.sumAndCount(e) }); //fat arrow lets `this` stay with what it was!
   },
   sumAndCount: function (entry){
     this.sum += entry;
@@ -416,12 +465,17 @@ let user = {
   clickHandler: function(event){
     let randomNum = ((Math.random() * 2 | 0) + 1) - 1; // random number between 0 and 1​
     // This line is adding a random person from the data array to the text field​
-    $ ("input").val(this.data[randomNum].name + " " + this.data[randomNum].age);
+    $ ("input").val(this.data[randomNum].name + " " + this.data[randomNum].handicap);
   }
 }
 ​
 ​// Assign an eventHandler to the button's click event​
 $ ("button").on('click', user.clickHandler);
+
+// LOL this won't work
+// when we do this, makes the value of `this` the thing we're calling in jQuery
+// jQuery sets the `this`!!!
+// so here, `this` is referencing button, not input
 ```
 
 What is happening and will this work?
@@ -431,6 +485,9 @@ user object like so:
 
 ```javascript
 $ ("button").on('click', user.clickHandler.bind(user));
+// .bind can be used in a callback... it doesn't invoke the function
+// it just sets the reference that `this` should be when a function does get called
+// .bind tells `this` to be the user here
 ```
 
 ## Summary
